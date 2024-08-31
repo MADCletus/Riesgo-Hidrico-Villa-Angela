@@ -1,21 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Mapa de Riesgo</title>
-  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa de Riesgo Hídrico</title>
+  <style>
+    /* Estilo básico para el mapa */
+    #map {
+      height: 600px;
+      width: 100%;
+    }
+  </style>
+  <!-- Cargar la API de Google Maps -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxaqdAkj5OZSbiim2oxydQAXsxfDOvl7k"></script>
   <script>
     function initMap() {
+      // Crear el mapa centrado en una ubicación específica
       var map = new google.maps.Map(document.getElementById('map'), {
         zoom: 10,
-        center: {lat: -34.397, lng: 150.644}
+        center: {lat: -27.569591091468123, lng: -60.709673623075524} // Cambia estas coordenadas a la ubicación deseada
       });
 
-      // Aquí deberás agregar tu capa de GeoJSON
-      map.data.addGeoJson(yourGeoJsonData);
+      // Cargar el archivo GeoJSON para Catastro
+      map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json'); //Catastro.json
+      // Cargar el archivo GeoJSON para Limite del estudio
+      map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Limite_del_Estudio.json');
+      // Cargar el archivo GeoJSON para Canales
+      map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.json');
+      // Cargar el archivo GeoJSON para zonas de riesgo Leve
+      map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Riesgo_LEVE.json');
+      // Cargar el archivo GeoJSON para zonas de riesgo Severo-Leve
+      map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Riesgo_SEVERO-LEVE.json');
+      // Cargar el archivo GeoJSON para zonas de riesgo Severo-Medio
+      map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Riesgo_SEVERO-MEDIO.json');
+      // Cargar el archivo GeoJSON para zonas de riesgo Severo-Alto
+      map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Riesgo_SEVERO-ALTO.json');
+      // Cargar el archivo GeoJSON para zonas de riesgo PROHIBIDO
+      map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Riesgo_PROHIBIDO.json');
+      // Cargar el archivo GeoJSON para zonas de reservorio
+      map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Reservorio.json');
+      
+      // Puedes seguir añadiendo más archivos GeoJSON como sea necesario
+
+      // Aplicar estilos personalizados según la propiedad 'riesgo'
+      map.data.setStyle(function(feature) {
+        var color = 'gray'; // Color por defecto
+        if (feature.getProperty('riesgo') === 'alto') {
+          color = 'red';
+        } else if (feature.getProperty('riesgo') === 'medio') {
+          color = 'yellow';
+        }
+        return {
+          fillColor: color,
+          strokeWeight: 1
+        };
+      });
     }
   </script>
 </head>
 <body onload="initMap()">
-  <div id="map" style="height: 500px; width: 100%;"></div>
+  <h1>Mapa de Riesgo Hídrico</h1>
+  <div id="map"></div> <!-- Este div contiene el mapa -->
 </body>
 </html>
