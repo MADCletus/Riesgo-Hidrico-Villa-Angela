@@ -11,3 +11,25 @@
   <div id="map" style="height: 500px; width: 100%;"></div>
 </body>
 </html>
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mapa de Riesgo</title>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+  <script>
+    function initMap() {
+      var map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 10,
+        center: {lat: -34.397, lng: 150.644}
+      });
+
+      // Aquí deberás agregar tu capa de GeoJSON
+      map.data.addGeoJson(yourGeoJsonData);
+    }
+  </script>
+</head>
+<body onload="initMap()">
+  <div id="map" style="height: 500px; width: 100%;"></div>
+</body>
+</html>
