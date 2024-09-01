@@ -21,10 +21,13 @@
 
       var infowindow = new google.maps.InfoWindow();
 
-      // Cargar los archivos GeoJSON
-      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.json');
-      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json');
+function loadGeoJsonSequentially() {
+  map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json', null, function() {
+    map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.json', null, function() {
       map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json');
+    });
+  });
+}      
     
 
       // Aplicar estilos personalizados
