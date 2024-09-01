@@ -66,9 +66,8 @@
         var riesgo = event.feature.getProperty('AMENAZA');
         var otherProperty = event.feature.getProperty('otraPropiedad'); // Cambia 'otraPropiedad' por una propiedad real si existe
 
-        var contentString = '<div><strong>Nivel de riesgo:</strong> ' + (riesgo || 'N/A') + '</div>' +
-                            '<div><strong>Id Canal:</strong> ' + (idCanal || 'N/A') + '</div>' +
-                            '<div><strong>Otra Propiedad:</strong> ' + (otherProperty || 'N/A') + '</div>';
+        var contentString = '<div><strong>Nivel de Amenaza:</strong> ' + riesgo + '</div>' +
+                            '<div><strong>Otra Propiedad:</strong> ' + otherProperty + '</div>';
 
         infowindow.setContent(contentString);
         infowindow.setPosition(event.latLng);
@@ -83,9 +82,8 @@
         var riesgo = event.feature.getProperty('AMENAZA');
         var otherProperty = event.feature.getProperty('otraPropiedad'); // Cambia 'otraPropiedad' por una propiedad real si existe
 
-        var contentString = '<div><strong>Nivel de riesgo:</strong> ' + (riesgo || 'N/A') + '</div>' +
-                            '<div><strong>Id Canal:</strong> ' + (idCanal || 'N/A') + '</div>' +
-                            '<div><strong>Otra Propiedad:</strong> ' + (otherProperty || 'N/A') + '</div>';
+        var contentString = '<div><strong>Nivel de riesgo:</strong> ' + riesgo + '</div>' +
+                            '<div><strong>Otra Propiedad:</strong> ' + otherProperty + '</div>';
 
         infowindow.setContent(contentString);
         infowindow.setPosition(event.latLng);
