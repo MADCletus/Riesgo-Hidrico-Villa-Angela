@@ -9,91 +9,122 @@
       height: 600px;
       width: 100%;
     }
+    #search-form {
+      margin: 10px;
+    }
   </style>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxaqdAkj5OZSbiim2oxydQAXsxfDOvl7k"></script>
   <script>
+    let map;
+    let catastroLayer;
+
     function initMap() {
-      var map = new google.maps.Map(document.getElementById('map'), {
+      map = new google.maps.Map(document.getElementById('map'), {
         zoom: 10,
         center: {lat: -27.569591091468123, lng: -60.709673623075524},
-        mapTypeId: 'satellite' 
+        mapTypeId: 'satellite'
       });
 
-      var infowindow = new google.maps.InfoWindow();
+      catastroLayer = new google.maps.Data();
+      catastroLayer.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json');
+      catastroLayer.setStyle(function(feature) {
+        return {
+          fillColor: 'transparent',
+          strokeColor: 'black',
+          strokeWeight: 1
+        };
+      });
+      catastroLayer.setMap(map);
 
       map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json');
       map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.json');
-      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json');
-      
 
-      // Aplicar estilos personalizados
       map.data.setStyle(function(feature) {
-        var color = 'grey';
-        var strokeWeight = 1;
+        var color = 'transparent';
+        var riesgo = feature.getProperty('AMENAZA');
+        var canales = feature.getProperty('Id');
 
-        // Para Zonificación (propiedad 'AMENAZA')
-        if (feature.getProperty('AMENAZA')) {
-          var riesgo = feature.getProperty('AMENAZA');
-          
-          if (riesgo === 'SEVERA') {
-            color = 'red';
-          } else if (riesgo === 'ALTA') {
-            color = 'yellow';
-          } else if (riesgo === 'MODERADA') {
-            color = 'green';
-          }
+        if (riesgo === 'SEVERA') {
+          color = 'red';
+        } else if (riesgo === 'ALTA') {
+          color = 'yellow';
+        } else if (riesgo === 'MODERADA') {
+          color = 'green';
         }
 
-        // Para Canales (propiedad 'Id')
-        if (feature.getProperty('FID')) {
-          var idCanal = feature.getProperty('FID');
-          
-          if (idCanal ==! 0) {
-            color = 'red';
-            strokeWeight = 3;
-          }
+        if (canales === 0) {
+          color = 'red';
         }
 
         return {
           fillColor: color,
           fillOpacity: 0.6,
           strokeColor: color,
-          strokeWeight: strokeWeight
+          strokeWeight: 1
         };
       });
 
-      map.data.addListener('mouseover', function(event) {
-        var riesgo = event.feature.getProperty('AMENAZA');
-        var otherProperty = event.feature.getProperty('otraPropiedad'); // Cambia 'otraPropiedad' por una propiedad real si existe
-
-        var contentString = '<div><strong>Nivel de Amenaza:</strong> ' + riesgo + '</div>' +
-                            '<div><strong>Otra Propiedad:</strong> ' + otherProperty + '</div>';
-
-        infowindow.setContent(contentString);
-        infowindow.setPosition(event.latLng);
-        infowindow.open(map);
+      // Evento para resaltar la parcela seleccionada
+      document.getElementById('search-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const parcelaId = document.getElementById('parcela-id').value;
+        highlightParcela(parcelaId);
       });
+    }
 
-      map.data.addListener('mouseout', function(event) {
-        infowindow.close();
+    function highlightParcela(id) {
+      catastroLayer.setStyle(function(feature) {
+        const color = feature.getProperty('ID') === id ? 'blue' : 'transparent';
+        return {
+          fillColor: color,
+          fillOpacity: 0.6,
+          strokeColor: color,
+          strokeWeight: 3
+        };
       });
+      
+      // Obtener y mostrar el porcentaje de riesgo dentro de la parcela
+      calculateRiskPercentages(id);
+    }
 
-      map.data.addListener('click', function(event) {
-        var riesgo = event.feature.getProperty('AMENAZA');
-        var otherProperty = event.feature.getProperty('otraPropiedad'); // Cambia 'otraPropiedad' por una propiedad real si existe
+    function calculateRiskPercentages(parcelaId) {
+      catastroLayer.getFeatureById(parcelaId).then(function(parcela) {
+        const bounds = new google.maps.LatLngBounds();
+        const risks = { SEVERA: 0, ALTA: 0, MODERADA: 0, LEVE: 0 };
+        let totalArea = 0;
+        let riskArea = { SEVERA: 0, ALTA: 0, MODERADA: 0, LEVE: 0 };
 
-        var contentString = '<div><strong>Nivel de riesgo:</strong> ' + riesgo + '</div>' +
-                            '<div><strong>Otra Propiedad:</strong> ' + otherProperty + '</div>';
+        map.data.forEach(function(feature) {
+          if (feature.getProperty('AMENAZA')) {
+            const riesgo = feature.getProperty('AMENAZA');
+            const area = google.maps.geometry.spherical.computeArea(feature.getGeometry().getCoordinates());
+            totalArea += area;
+            riskArea[riesgo] += area;
+          }
+        });
 
-        infowindow.setContent(contentString);
-        infowindow.setPosition(event.latLng);
-        infowindow.open(map);
+        const percentages = {
+          SEVERA: (riskArea['SEVERA'] / totalArea) * 100,
+          ALTA: (riskArea['ALTA'] / totalArea) * 100,
+          MODERADA: (riskArea['MODERADA'] / totalArea) * 100,
+          LEVE: (riskArea['LEVE'] / totalArea) * 100
+        };
+
+        alert(`Porcentaje de riesgo en la parcela ${parcelaId}:\n
+        SEVERA: ${percentages.SEVERA.toFixed(2)}%\n
+        ALTA: ${percentages.ALTA.toFixed(2)}%\n
+        MODERADA: ${percentages.MODERADA.toFixed(2)}%\n
+        LEVE: ${percentages.LEVE.toFixed(2)}%`);
       });
     }
   </script>
 </head>
 <body onload="initMap()">
   <h1>Mapa de Riesgo Hídrico</h1>
+  <form id="search-form">
+    <input type="text" id="parcela-id" placeholder="Ingrese ID de Parcela" required>
+    <button type="submit">Buscar Parcela</button>
+  </form>
   <div id="map"></div>
 </body>
 </html>
