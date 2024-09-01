@@ -18,6 +18,43 @@
         center: {lat: -27.569591091468123, lng: -60.709673623075524},
         mapTypeId: 'satellite' 
       });
+
+      // Cargar los archivos GeoJSON
+      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json');
+      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.json');
+      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json');
+
+      // Aplicar estilos básicos
+      map.data.setStyle(function(feature) {
+        var color = 'transparent';
+        var strokeWeight = 1;
+
+        if (feature.getProperty('AMENAZA')) {
+          var riesgo = feature.getProperty('AMENAZA');
+          if (riesgo === 'SEVERA') {
+            color = 'red';
+          } else if (riesgo === 'ALTA') {
+            color = 'yellow';
+          } else if (riesgo === 'MODERADA') {
+            color = 'green';
+          }
+        }
+
+        if (feature.getProperty('Id')) {
+          var idCanal = feature.getProperty('Id');
+          if (idCanal === 0) {
+            color = 'red';
+            strokeWeight = 3;
+          }
+        }
+
+        return {
+          fillColor: color,
+          fillOpacity: 0.6,
+          strokeColor: color,
+          strokeWeight: strokeWeight
+        };
+      });
     }
   </script>
 </head>
