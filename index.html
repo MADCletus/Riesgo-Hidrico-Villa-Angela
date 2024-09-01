@@ -27,13 +27,15 @@
 
       // Cargar los archivos GeoJSON
       map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json');
+      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.json');
       map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json');
 
       // Aplicar estilos personalizados según la propiedad 'riesgo'
       map.data.setStyle(function(feature) {
         var color = 'transparent'; // Color por defecto
         var riesgo = feature.getProperty('AMENAZA');
-
+        var canales = feature.getproperty('Id');
+        
         if (riesgo === 'SEVERA') {
           color = 'red';
         } else if (riesgo === 'ALTA') {
@@ -43,7 +45,11 @@
         } else if (riesgo === 'LEVE') {
           color = 'transparent';
         }
-
+        
+        if (canales === 0) {
+          color = 'red';
+        }
+        
         return {
           fillColor: color,
           fillOpacity: 0.6,
