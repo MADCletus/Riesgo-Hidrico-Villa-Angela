@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa de Riesgo Hídrico</title>
+  <style>
+    #map {
+      height: 600px;
+      width: 100%;
+    }
+  </style>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxaqdAkj5OZSbiim2oxydQAXsxfDOvl7k"></script>
+  <script>
+    function initMap() {
+      var map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 10,
+        center: {lat: -27.569591091468123, lng: -60.709673623075524},
+        mapTypeId: 'satellite' 
+      });
+    }
+  </script>
+</head>
+<body onload="initMap()">
+  <h1>Mapa de Riesgo Hídrico</h1>
+  <div id="map"></div>
+</body>
+</html>
