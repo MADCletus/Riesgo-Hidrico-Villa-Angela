@@ -24,6 +24,8 @@
         center: {lat: -27.569591091468123, lng: -60.709673623075524},
         mapTypeId: 'satellite'
       });
+      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json');
+      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.json');
 
       catastroLayer = new google.maps.Data();
       catastroLayer.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json');
@@ -36,9 +38,7 @@
       });
       catastroLayer.setMap(map);
 
-      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json');
-      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.json');
-
+    
       map.data.setStyle(function(feature) {
         var color = 'transparent';
         var riesgo = feature.getProperty('AMENAZA');
