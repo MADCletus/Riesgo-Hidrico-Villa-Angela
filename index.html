@@ -12,40 +12,106 @@
     }
   </style>
   <!-- Cargar la API de Google Maps -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxaqdAkj5OZSbiim2oxydQAXsxfDOvl7k"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
   <script>
     function initMap() {
-      // Crear el mapa centrado en una ubicación específica
+      // Crear el mapa centrado en Villa Ángela, Chaco
       var map = new google.maps.Map(document.getElementById('map'), {
         zoom: 10,
-        center: {lat: -27.569591091468123, lng: -60.709673623075524} // Villa Ángela, Chaco
+        center: {lat: -27.569591091468123, lng: -60.709673623075524}
       });
 
+      // Crear el info window
+      var infowindow = new google.maps.InfoWindow();
+
       // Cargar los archivos GeoJSON
-      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json'); // Catastro.json
-      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json'); // Zonificación.json
+      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json');
+      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json');
 
       // Aplicar estilos personalizados según la propiedad 'riesgo'
       map.data.setStyle(function(feature) {
-        var color = 'transparent'; // Color por defecto (transparente para riesgo leve)
+        var color = 'transparent'; // Color por defecto
         var riesgo = feature.getProperty('AMENAZA');
 
         if (riesgo === 'SEVERA') {
-          color = 'red'; // Rojo para riesgo severo
+          color = 'red';
         } else if (riesgo === 'ALTA') {
-          color = 'yellow'; // Amarillo para riesgo alto
+          color = 'yellow';
         } else if (riesgo === 'MODERADA') {
-          color = 'green'; // Verde para riesgo moderado
+          color = 'green';
         } else if (riesgo === 'LEVE') {
-          color = 'transparent'; // Transparente o blanco para riesgo leve
+          color = 'transparent';
         }
 
         return {
           fillColor: color,
-          fillOpacity: 0.6, // Ajusta la opacidad del relleno si es necesario
-          strokeColor: '#000000', // Color del borde
-          strokeWeight: 1 // Grosor del borde
+          fillOpacity: 0.6,
+          strokeColor: '#000000',
+          strokeWeight: 1
         };
+      });
+
+      // Evento mouseover para mostrar información al pasar el cursor
+      map.data.addListener('mouseover', function(event) {
+        var riesgo = event.feature.getProperty('AMENAZA');
+        var Circuns = event.feature.getProperty('Circuns');
+        var Seccion = event.feature.getproperty('Seccion');
+        var Dpto = event.feature.getproperty('Dpto');
+        var Chacra = event.feature.getproperty('Chacra');
+        var Frac = event.feature.getproperty('Frac');
+        var Sub_Ch = event.feature.getproperty('Sub_Ch');
+        var Mza = event.feature.getproperty('Mza');
+        var Parce = event.feature.getproperty('Parce');
+        var Qta = event.feature.getproperty('Qta');// Cambia 'otraPropiedad' por el nombre real de la propiedad que deseas mostrar
+
+        var contentString = '<div><strong>Nivel de riesgo:</strong> ' + riesgo + '</div>' +
+                            '<div><strong>Circunscripción:</strong> ' + Circuns + '</div>' +
+                            '<div><strong>Sección:</strong> ' + Seccion + '</div>' +
+                            '<div><strong>Departamento:</strong> ' + Dpto + '</div>' + 
+                            '<div><strong>Chacra:</strong> ' + Chacra + '</div>' +
+                            '<div><strong>Fracción:</strong> ' + Frac + '</div>' +
+                            '<div><strong>Sub Chacra:</strong> ' + Sub_Ch + '</div>' +
+                            '<div><strong>Manzana:</strong> ' + Mza + '</div>' +
+                            '<div><strong>Parcela:</strong> ' + Parce + '</div>' +
+                            '<div><strong>Quinta:</strong> ' + Qta + '</div>';
+
+        infowindow.setContent(contentString);
+        infowindow.setPosition(event.latLng);
+        infowindow.open(map);
+      });
+
+      // Evento mouseout para cerrar el info window cuando el cursor salga de la zona
+      map.data.addListener('mouseout', function(event) {
+        infowindow.close();
+      });
+
+      // Evento click para mostrar información detallada al hacer clic
+      map.data.addListener('click', function(event) {
+        var riesgo = event.feature.getProperty('AMENAZA');
+        var Circuns = event.feature.getProperty('Circuns');
+        var Seccion = event.feature.getproperty('Seccion');
+        var Dpto = event.feature.getproperty('Dpto');
+        var Chacra = event.feature.getproperty('Chacra');
+        var Frac = event.feature.getproperty('Frac');
+        var Sub_Ch = event.feature.getproperty('Sub_Ch');
+        var Mza = event.feature.getproperty('Mza');
+        var Parce = event.feature.getproperty('Parce');
+        var Qta = event.feature.getproperty('Qta');// Cambia 'otraPropiedad' por el nombre real de la propiedad que deseas mostrar
+
+        var contentString = '<div><strong>Nivel de riesgo:</strong> ' + riesgo + '</div>' +
+                            '<div><strong>Circunscripción:</strong> ' + Circuns + '</div>' +
+                            '<div><strong>Sección:</strong> ' + Seccion + '</div>' +
+                            '<div><strong>Departamento:</strong> ' + Dpto + '</div>' + 
+                            '<div><strong>Chacra:</strong> ' + Chacra + '</div>' +
+                            '<div><strong>Fracción:</strong> ' + Frac + '</div>' +
+                            '<div><strong>Sub Chacra:</strong> ' + Sub_Ch + '</div>' +
+                            '<div><strong>Manzana:</strong> ' + Mza + '</div>' +
+                            '<div><strong>Parcela:</strong> ' + Parce + '</div>' +
+                            '<div><strong>Quinta:</strong> ' + Qta + '</div>';
+        
+        infowindow.setContent(contentString);
+        infowindow.setPosition(event.latLng);
+        infowindow.open(map);
       });
     }
   </script>
