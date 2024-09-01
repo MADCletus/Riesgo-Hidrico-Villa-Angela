@@ -24,6 +24,7 @@
         center: {lat: -27.569591091468123, lng: -60.709673623075524},
         mapTypeId: 'satellite'
       });
+
       map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json');
       map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.json');
 
@@ -38,7 +39,7 @@
       });
       catastroLayer.setMap(map);
 
-    
+     
       map.data.setStyle(function(feature) {
         var color = 'transparent';
         var riesgo = feature.getProperty('AMENAZA');
@@ -64,17 +65,30 @@
         };
       });
 
-      // Evento para resaltar la parcela seleccionada
+      // Evento para buscar y resaltar una parcela
       document.getElementById('search-form').addEventListener('submit', function(event) {
         event.preventDefault();
-        const parcelaId = document.getElementById('parcela-id').value;
-        highlightParcela(parcelaId);
+        const chacra = document.getElementById('chacra').value;
+        const fraccion = document.getElementById('fraccion').value;
+        const subCh = document.getElementById('sub-ch').value;
+        const manzana = document.getElementById('manzana').value;
+        const parcela = document.getElementById('parcela').value;
+        const quinta = document.getElementById('quinta').value;
+        highlightParcel(chacra, fraccion, subCh, manzana, parcela, quinta);
       });
     }
 
-    function highlightParcela(id) {
+    function highlightParcel(chacra, fraccion, subCh, manzana, parcela, quinta) {
       catastroLayer.setStyle(function(feature) {
-        const color = feature.getProperty('ID') === id ? 'blue' : 'transparent';
+        const isMatch = (feature.getProperty('Chacra') === chacra &&
+                         feature.getProperty('frac') === fraccion &&
+                         feature.getProperty('Sub_Ch') === subCh &&
+                         feature.getProperty('Mza') === manzana &&
+                         feature.getProperty('Parce') === parcela &&
+                         feature.getProperty('Quinta') === quinta);
+        
+        const color = isMatch ? 'blue' : 'transparent';
+        
         return {
           fillColor: color,
           fillOpacity: 0.6,
@@ -84,45 +98,46 @@
       });
       
       // Obtener y mostrar el porcentaje de riesgo dentro de la parcela
-      calculateRiskPercentages(id);
+      calculateRiskPercentages(chacra, fraccion, subCh, manzana, parcela, quinta);
     }
 
-    function calculateRiskPercentages(parcelaId) {
-      catastroLayer.getFeatureById(parcelaId).then(function(parcela) {
-        const bounds = new google.maps.LatLngBounds();
-        const risks = { SEVERA: 0, ALTA: 0, MODERADA: 0, LEVE: 0 };
-        let totalArea = 0;
-        let riskArea = { SEVERA: 0, ALTA: 0, MODERADA: 0, LEVE: 0 };
+    function calculateRiskPercentages(chacra, fraccion, subCh, manzana, parcela, quinta) {
+      let totalArea = 0;
+      let riskArea = { SEVERA: 0, ALTA: 0, MODERADA: 0, LEVE: 0 };
 
-        map.data.forEach(function(feature) {
-          if (feature.getProperty('AMENAZA')) {
-            const riesgo = feature.getProperty('AMENAZA');
-            const area = google.maps.geometry.spherical.computeArea(feature.getGeometry().getCoordinates());
-            totalArea += area;
-            riskArea[riesgo] += area;
-          }
-        });
-
-        const percentages = {
-          SEVERA: (riskArea['SEVERA'] / totalArea) * 100,
-          ALTA: (riskArea['ALTA'] / totalArea) * 100,
-          MODERADA: (riskArea['MODERADA'] / totalArea) * 100,
-          LEVE: (riskArea['LEVE'] / totalArea) * 100
-        };
-
-        alert(`Porcentaje de riesgo en la parcela ${parcelaId}:\n
-        SEVERA: ${percentages.SEVERA.toFixed(2)}%\n
-        ALTA: ${percentages.ALTA.toFixed(2)}%\n
-        MODERADA: ${percentages.MODERADA.toFixed(2)}%\n
-        LEVE: ${percentages.LEVE.toFixed(2)}%`);
+      map.data.forEach(function(feature) {
+        if (feature.getProperty('AMENAZA')) {
+          const riesgo = feature.getProperty('AMENAZA');
+          const area = google.maps.geometry.spherical.computeArea(feature.getGeometry().getCoordinates());
+          totalArea += area;
+          riskArea[riesgo] += area;
+        }
       });
+
+      const percentages = {
+        SEVERA: (riskArea['SEVERA'] / totalArea) * 100,
+        ALTA: (riskArea['ALTA'] / totalArea) * 100,
+        MODERADA: (riskArea['MODERADA'] / totalArea) * 100,
+        LEVE: (riskArea['LEVE'] / totalArea) * 100
+      };
+
+      alert(`Porcentaje de riesgo en la parcela:\n
+      SEVERA: ${percentages.SEVERA.toFixed(2)}%\n
+      ALTA: ${percentages.ALTA.toFixed(2)}%\n
+      MODERADA: ${percentages.MODERADA.toFixed(2)}%\n
+      LEVE: ${percentages.LEVE.toFixed(2)}%`);
     }
   </script>
 </head>
 <body onload="initMap()">
   <h1>Mapa de Riesgo Hídrico</h1>
   <form id="search-form">
-    <input type="text" id="parcela-id" placeholder="Ingrese ID de Parcela" required>
+    <input type="text" id="chacra" placeholder="Chacra" maxlength="3">
+    <input type="text" id="fraccion" placeholder="Fracción" maxlength="1">
+    <input type="text" id="sub-ch" placeholder="Sub chacra" maxlength="3">
+    <input type="text" id="manzana" placeholder="Manzana" maxlength="3">
+    <input type="text" id="parcela" placeholder="Parcela" maxlength="6">
+    <input type="text" id="quinta" placeholder="Quinta" maxlength="2">
     <button type="submit">Buscar Parcela</button>
   </form>
   <div id="map"></div>
