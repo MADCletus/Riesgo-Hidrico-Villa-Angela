@@ -45,10 +45,10 @@
         }
 
         // Para Canales (propiedad 'Id')
-        if (feature.getProperty('Id')) {
-          var idCanal = feature.getProperty('Id');
+        if (feature.getProperty('FID')) {
+          var idCanal = feature.getProperty('FID');
           
-          if (idCanal === 0) {
+          if (idCanal ==! 0) {
             color = 'red';
             strokeWeight = 3;
           }
