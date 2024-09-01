@@ -5,24 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mapa de Riesgo Hídrico</title>
   <style>
-    /* Estilo básico para el mapa */
     #map {
       height: 600px;
       width: 100%;
     }
   </style>
-  <!-- Cargar la API de Google Maps -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxaqdAkj5OZSbiim2oxydQAXsxfDOvl7k"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
   <script>
     function initMap() {
-      // Crear el mapa centrado en Villa Ángela, Chaco
       var map = new google.maps.Map(document.getElementById('map'), {
         zoom: 10,
         center: {lat: -27.569591091468123, lng: -60.709673623075524},
         mapTypeId: 'satellite' 
       });
 
-      // Crear el info window
       var infowindow = new google.maps.InfoWindow();
 
       // Cargar los archivos GeoJSON
@@ -30,28 +26,34 @@
       map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.json');
       map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json');
 
-      // Aplicar estilos personalizados según la propiedad 'riesgo'
+      // Aplicar estilos personalizados
       map.data.setStyle(function(feature) {
-        var color = 'transparent'; // Color por defecto
-        var strokeWeight = 1; // espesor por defecto
-        var riesgo = feature.getProperty('AMENAZA');
-        var canales = feature.getproperty('Id');
-        
-        if (riesgo === 'SEVERA') {
-          color = 'red';
-        } else if (riesgo === 'ALTA') {
-          color = 'yellow';
-        } else if (riesgo === 'MODERADA') {
-          color = 'green';
-        } else if (riesgo === 'LEVE') {
-          color = 'transparent';
+        var color = 'transparent';
+        var strokeWeight = 1;
+
+        // Para Zonificación (propiedad 'AMENAZA')
+        if (feature.getProperty('AMENAZA')) {
+          var riesgo = feature.getProperty('AMENAZA');
+          
+          if (riesgo === 'SEVERA') {
+            color = 'red';
+          } else if (riesgo === 'ALTA') {
+            color = 'yellow';
+          } else if (riesgo === 'MODERADA') {
+            color = 'green';
+          }
         }
-        
-        if (canales === 0) {
-          color = 'red';
-          strokeWeight = 3;
+
+        // Para Canales (propiedad 'Id')
+        if (feature.getProperty('Id')) {
+          var idCanal = feature.getProperty('Id');
+          
+          if (idCanal === 0) {
+            color = 'red';
+            strokeWeight = 3;
+          }
         }
-        
+
         return {
           fillColor: color,
           fillOpacity: 0.6,
@@ -60,31 +62,32 @@
         };
       });
 
-      // Evento mouseover para mostrar información al pasar el cursor
       map.data.addListener('mouseover', function(event) {
         var riesgo = event.feature.getProperty('AMENAZA');
-        var otherProperty = event.feature.getProperty('otraPropiedad'); // Cambia 'otraPropiedad' por el nombre real de la propiedad que deseas mostrar
+        var idCanal = event.feature.getProperty('Id');
+        var otherProperty = event.feature.getProperty('otraPropiedad'); // Cambia 'otraPropiedad' por una propiedad real si existe
 
-        var contentString = '<div><strong>Nivel de Amenaza:</strong> ' + riesgo + '</div>' +
-                            '<div><strong>Otra Propiedad:</strong> ' + otherProperty + '</div>';
+        var contentString = '<div><strong>Nivel de riesgo:</strong> ' + (riesgo || 'N/A') + '</div>' +
+                            '<div><strong>Id Canal:</strong> ' + (idCanal || 'N/A') + '</div>' +
+                            '<div><strong>Otra Propiedad:</strong> ' + (otherProperty || 'N/A') + '</div>';
 
         infowindow.setContent(contentString);
         infowindow.setPosition(event.latLng);
         infowindow.open(map);
       });
 
-      // Evento mouseout para cerrar el info window cuando el cursor salga de la zona
       map.data.addListener('mouseout', function(event) {
         infowindow.close();
       });
 
-      // Evento click para mostrar información detallada al hacer clic
       map.data.addListener('click', function(event) {
         var riesgo = event.feature.getProperty('AMENAZA');
-        var otherProperty = event.feature.getProperty('otraPropiedad'); // Cambia 'otraPropiedad' por el nombre real de la propiedad que deseas mostrar
+        var idCanal = event.feature.getProperty('Id');
+        var otherProperty = event.feature.getProperty('otraPropiedad'); // Cambia 'otraPropiedad' por una propiedad real si existe
 
-        var contentString = '<div><strong>Nivel de riesgo:</strong> ' + riesgo + '</div>' +
-                            '<div><strong>Otra Propiedad:</strong> ' + otherProperty + '</div>';
+        var contentString = '<div><strong>Nivel de riesgo:</strong> ' + (riesgo || 'N/A') + '</div>' +
+                            '<div><strong>Id Canal:</strong> ' + (idCanal || 'N/A') + '</div>' +
+                            '<div><strong>Otra Propiedad:</strong> ' + (otherProperty || 'N/A') + '</div>';
 
         infowindow.setContent(contentString);
         infowindow.setPosition(event.latLng);
@@ -95,6 +98,6 @@
 </head>
 <body onload="initMap()">
   <h1>Mapa de Riesgo Hídrico</h1>
-  <div id="map"></div> <!-- Este div contiene el mapa -->
+  <div id="map"></div>
 </body>
 </html>
