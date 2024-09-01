@@ -53,27 +53,11 @@
 
       // Evento mouseover para mostrar información al pasar el cursor
       map.data.addListener('mouseover', function(event) {
-        var riesgo = event.feature.getProperty('AMENAZA');
-        var Circuns = event.feature.getProperty('Circuns');
-        var Seccion = event.feature.getproperty('Seccion');
-        var Dpto = event.feature.getproperty('Dpto');
-        var Chacra = event.feature.getproperty('Chacra');
-        var Frac = event.feature.getproperty('Frac');
-        var Sub_Ch = event.feature.getproperty('Sub_Ch');
-        var Mza = event.feature.getproperty('Mza');
-        var Parce = event.feature.getproperty('Parce');
-        var Qta = event.feature.getproperty('Qta');// Cambia 'otraPropiedad' por el nombre real de la propiedad que deseas mostrar
+        var riesgo = event.feature.getProperty('riesgo');
+        var otherProperty = event.feature.getProperty('otraPropiedad'); // Cambia 'otraPropiedad' por el nombre real de la propiedad que deseas mostrar
 
         var contentString = '<div><strong>Nivel de riesgo:</strong> ' + riesgo + '</div>' +
-                            '<div><strong>Circunscripción:</strong> ' + Circuns + '</div>' +
-                            '<div><strong>Sección:</strong> ' + Seccion + '</div>' +
-                            '<div><strong>Departamento:</strong> ' + Dpto + '</div>' + 
-                            '<div><strong>Chacra:</strong> ' + Chacra + '</div>' +
-                            '<div><strong>Fracción:</strong> ' + Frac + '</div>' +
-                            '<div><strong>Sub Chacra:</strong> ' + Sub_Ch + '</div>' +
-                            '<div><strong>Manzana:</strong> ' + Mza + '</div>' +
-                            '<div><strong>Parcela:</strong> ' + Parce + '</div>' +
-                            '<div><strong>Quinta:</strong> ' + Qta + '</div>';
+                            '<div><strong>Otra Propiedad:</strong> ' + otherProperty + '</div>';
 
         infowindow.setContent(contentString);
         infowindow.setPosition(event.latLng);
@@ -87,28 +71,12 @@
 
       // Evento click para mostrar información detallada al hacer clic
       map.data.addListener('click', function(event) {
-        var riesgo = event.feature.getProperty('AMENAZA');
-        var Circuns = event.feature.getProperty('Circuns');
-        var Seccion = event.feature.getproperty('Seccion');
-        var Dpto = event.feature.getproperty('Dpto');
-        var Chacra = event.feature.getproperty('Chacra');
-        var Frac = event.feature.getproperty('Frac');
-        var Sub_Ch = event.feature.getproperty('Sub_Ch');
-        var Mza = event.feature.getproperty('Mza');
-        var Parce = event.feature.getproperty('Parce');
-        var Qta = event.feature.getproperty('Qta');// Cambia 'otraPropiedad' por el nombre real de la propiedad que deseas mostrar
+        var riesgo = event.feature.getProperty('riesgo');
+        var otherProperty = event.feature.getProperty('otraPropiedad'); // Cambia 'otraPropiedad' por el nombre real de la propiedad que deseas mostrar
 
         var contentString = '<div><strong>Nivel de riesgo:</strong> ' + riesgo + '</div>' +
-                            '<div><strong>Circunscripción:</strong> ' + Circuns + '</div>' +
-                            '<div><strong>Sección:</strong> ' + Seccion + '</div>' +
-                            '<div><strong>Departamento:</strong> ' + Dpto + '</div>' + 
-                            '<div><strong>Chacra:</strong> ' + Chacra + '</div>' +
-                            '<div><strong>Fracción:</strong> ' + Frac + '</div>' +
-                            '<div><strong>Sub Chacra:</strong> ' + Sub_Ch + '</div>' +
-                            '<div><strong>Manzana:</strong> ' + Mza + '</div>' +
-                            '<div><strong>Parcela:</strong> ' + Parce + '</div>' +
-                            '<div><strong>Quinta:</strong> ' + Qta + '</div>';
-        
+                            '<div><strong>Otra Propiedad:</strong> ' + otherProperty + '</div>';
+
         infowindow.setContent(contentString);
         infowindow.setPosition(event.latLng);
         infowindow.open(map);
