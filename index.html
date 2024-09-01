@@ -12,6 +12,9 @@
     #search-form {
       margin: 10px;
     }
+    #search-form input {
+      margin-right: 5px;
+    }
   </style>
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxaqdAkj5OZSbiim2oxydQAXsxfDOvl7k"></script>
   <script>
@@ -25,9 +28,6 @@
         mapTypeId: 'satellite'
       });
 
-      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json');
-      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.json');
-
       catastroLayer = new google.maps.Data();
       catastroLayer.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json');
       catastroLayer.setStyle(function(feature) {
@@ -39,7 +39,9 @@
       });
       catastroLayer.setMap(map);
 
-     
+      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json');
+      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.json');
+
       map.data.setStyle(function(feature) {
         var color = 'transparent';
         var riesgo = feature.getProperty('AMENAZA');
@@ -96,7 +98,7 @@
           strokeWeight: 3
         };
       });
-      
+
       // Obtener y mostrar el porcentaje de riesgo dentro de la parcela
       calculateRiskPercentages(chacra, fraccion, subCh, manzana, parcela, quinta);
     }
