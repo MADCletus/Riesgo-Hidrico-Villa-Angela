@@ -54,10 +54,9 @@
       // Evento mouseover para mostrar información al pasar el cursor
       map.data.addListener('mouseover', function(event) {
         var riesgo = event.feature.getProperty('AMENAZA');
-        var otherProperty = event.feature.getProperty('Parce'); // Cambia 'otraPropiedad' por el nombre real de la propiedad que deseas mostrar
+      // Cambia 'otraPropiedad' por el nombre real de la propiedad que deseas mostrar
 
-        var contentString = '<div><strong>Nivel de riesgo:</strong> ' + riesgo + '</div>' +
-                            '<div><strong>Otra Propiedad:</strong> ' + otherProperty + '</div>';
+        var contentString = '<div><strong>Nivel de riesgo:</strong> ' + riesgo + '</div>';
 
         infowindow.setContent(contentString);
         infowindow.setPosition(event.latLng);
@@ -72,10 +71,9 @@
       // Evento click para mostrar información detallada al hacer clic
       map.data.addListener('click', function(event) {
         var riesgo = event.feature.getProperty('AMENAZA');
-        var otherProperty = event.feature.getProperty('Parce'); // Cambia 'otraPropiedad' por el nombre real de la propiedad que deseas mostrar
+        // Cambia 'otraPropiedad' por el nombre real de la propiedad que deseas mostrar
 
-        var contentString = '<div><strong>Nivel de riesgo:</strong> ' + riesgo + '</div>' +
-                            '<div><strong>Otra Propiedad:</strong> ' + otherProperty + '</div>';
+        var contentString = '<div><strong>Nivel de riesgo:</strong> ' + riesgo + '</div>';
 
         infowindow.setContent(contentString);
         infowindow.setPosition(event.latLng);
