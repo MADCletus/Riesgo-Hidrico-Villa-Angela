@@ -64,7 +64,6 @@
 
       map.data.addListener('mouseover', function(event) {
         var riesgo = event.feature.getProperty('AMENAZA');
-        var idCanal = event.feature.getProperty('Id');
         var otherProperty = event.feature.getProperty('otraPropiedad'); // Cambia 'otraPropiedad' por una propiedad real si existe
 
         var contentString = '<div><strong>Nivel de riesgo:</strong> ' + (riesgo || 'N/A') + '</div>' +
@@ -82,7 +81,6 @@
 
       map.data.addListener('click', function(event) {
         var riesgo = event.feature.getProperty('AMENAZA');
-        var idCanal = event.feature.getProperty('Id');
         var otherProperty = event.feature.getProperty('otraPropiedad'); // Cambia 'otraPropiedad' por una propiedad real si existe
 
         var contentString = '<div><strong>Nivel de riesgo:</strong> ' + (riesgo || 'N/A') + '</div>' +
