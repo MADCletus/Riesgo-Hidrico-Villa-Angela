@@ -18,41 +18,33 @@
       // Crear el mapa centrado en una ubicación específica
       var map = new google.maps.Map(document.getElementById('map'), {
         zoom: 10,
-        center: {lat: -27.569591091468123, lng: -60.709673623075524} // Cambia estas coordenadas a la ubicación deseada
+        center: {lat: -27.569591091468123, lng: -60.709673623075524} // Villa Ángela, Chaco
       });
 
-      // Cargar el archivo GeoJSON para Catastro
-      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json'); //Catastro.json
-      // Cargar el archivo GeoJSON para Limite del estudio
-      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json');
-      // Cargar el archivo GeoJSON para Canales
-      //map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.jso');
-      // Cargar el archivo GeoJSON para zonas de riesgo Leve
-     // map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Riesgo_LEVE.jso');
-      // Cargar el archivo GeoJSON para zonas de riesgo Severo-Leve
-     // map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Riesgo_SEVERO-LEVE.jso');
-      // Cargar el archivo GeoJSON para zonas de riesgo Severo-Medio
-      //map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Riesgo_SEVERO-MEDIO.jso');
-      // Cargar el archivo GeoJSON para zonas de riesgo Severo-Alto
-      //map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Riesgo_SEVERO-ALTO.jso');
-      // Cargar el archivo GeoJSON para zonas de riesgo PROHIBIDO
-      //map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Riesgo_PROHIBIDO.jso');
-      // Cargar el archivo GeoJSON para zonas de reservorio
-      //map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Reservorio.jso');
-      
-      // Puedes seguir añadiendo más archivos GeoJSON como sea necesario
+      // Cargar los archivos GeoJSON
+      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json'); // Catastro.json
+      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json'); // Zonificación.json
 
       // Aplicar estilos personalizados según la propiedad 'riesgo'
       map.data.setStyle(function(feature) {
-        var color = 'black'; // Color por defecto
-        if (feature.getProperty('riesgo') === 'alto') {
-          color = 'red';
-        } else if (feature.getProperty('riesgo') === 'medio') {
-          color = 'yellow';
+        var color = 'transparent'; // Color por defecto (transparente para riesgo leve)
+        var riesgo = feature.getProperty('AMENAZA');
+
+        if (riesgo === 'SEVERA') {
+          color = 'red'; // Rojo para riesgo severo
+        } else if (riesgo === 'ALTA') {
+          color = 'yellow'; // Amarillo para riesgo alto
+        } else if (riesgo === 'MODERADA') {
+          color = 'green'; // Verde para riesgo moderado
+        } else if (riesgo === 'LEVE') {
+          color = 'transparent'; // Transparente o blanco para riesgo leve
         }
+
         return {
           fillColor: color,
-          strokeWeight: 1
+          fillOpacity: 0.6, // Ajusta la opacidad del relleno si es necesario
+          strokeColor: '#000000', // Color del borde
+          strokeWeight: 1 // Grosor del borde
         };
       });
     }
