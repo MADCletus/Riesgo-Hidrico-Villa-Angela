@@ -29,7 +29,7 @@
 
       // Aplicar estilos personalizados
       map.data.setStyle(function(feature) {
-        var color = 'black';
+        var color = 'transparent';
         var strokeWeight = 1;
 
         // Para Zonificación (propiedad 'AMENAZA')
@@ -46,10 +46,10 @@
         }
 
         // Para Canales (propiedad 'Id')
-        if (feature.getProperty('FID')) {
-          var idCanal = feature.getProperty('FID');
+        if (feature.getProperty('Id')) {
+          var idCanal = feature.getProperty('Id');
           
-          if (idCanal ==! 0) {
+          if (idCanal === 0) {
             color = 'red';
             strokeWeight = 3;
           }
