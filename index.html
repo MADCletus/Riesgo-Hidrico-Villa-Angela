@@ -53,7 +53,7 @@
 
       // Evento mouseover para mostrar información al pasar el cursor
       map.data.addListener('mouseover', function(event) {
-        var riesgo = event.feature.getProperty('riesgo');
+        var riesgo = event.feature.getProperty('AMENAZA');
         var otherProperty = event.feature.getProperty('otraPropiedad'); // Cambia 'otraPropiedad' por el nombre real de la propiedad que deseas mostrar
 
         var contentString = '<div><strong>Nivel de riesgo:</strong> ' + riesgo + '</div>' +
