@@ -33,6 +33,7 @@
       // Aplicar estilos personalizados según la propiedad 'riesgo'
       map.data.setStyle(function(feature) {
         var color = 'transparent'; // Color por defecto
+        var strokeWeight = 1; // espesor por defecto
         var riesgo = feature.getProperty('AMENAZA');
         var canales = feature.getproperty('Id');
         
@@ -48,13 +49,14 @@
         
         if (canales === 0) {
           color = 'red';
+          strokeWeight = 3;
         }
         
         return {
           fillColor: color,
           fillOpacity: 0.6,
-          strokeColor: '#000000',
-          strokeWeight: 1
+          strokeColor: color,
+          strokeWeight: strokeWeight
         };
       });
 
