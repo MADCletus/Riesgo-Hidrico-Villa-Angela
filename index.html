@@ -12,7 +12,7 @@
     }
   </style>
   <!-- Cargar la API de Google Maps -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxaqdAkj5OZSbiim2oxydQAXsxfDOvl7k"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
   <script>
     function initMap() {
       // Crear el mapa centrado en una ubicación específica
@@ -21,14 +21,30 @@
         center: {lat: -27.569591091468123, lng: -60.709673623075524} // Cambia estas coordenadas a la ubicación deseada
       });
 
-      // Cargar el archivo GeoJSON para Catastro
-      map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json'); //Catastro.json
-      // Cargar el archivo GeoJSON para Limite del estudio
-            
+      // Cargar el archivo GeoJSON para catastro
+      map.data.loadGeoJson('https://MADCletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.geojson');
+
+      // Cargar el archivo GeoJSON para zonas de riesgo alto
+      map.data.loadGeoJson('https://tuusuario.github.io/tu-repositorio/data/riesgo_alto.geojson');
+
+      // Cargar el archivo GeoJSON para zonas de riesgo medio
+      map.data.loadGeoJson('https://tuusuario.github.io/tu-repositorio/data/riesgo_medio.geojson');
+
       // Puedes seguir añadiendo más archivos GeoJSON como sea necesario
 
       // Aplicar estilos personalizados según la propiedad 'riesgo'
-         });
+      map.data.setStyle(function(feature) {
+        var color = 'gray'; // Color por defecto
+        if (feature.getProperty('riesgo') === 'alto') {
+          color = 'red';
+        } else if (feature.getProperty('riesgo') === 'medio') {
+          color = 'yellow';
+        }
+        return {
+          fillColor: color,
+          strokeWeight: 1
+        };
+      });
     }
   </script>
 </head>
