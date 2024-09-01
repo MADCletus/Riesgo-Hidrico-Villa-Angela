@@ -44,7 +44,7 @@
 
       // Aplicar estilos personalizados según la propiedad 'riesgo'
       map.data.setStyle(function(feature) {
-        var color = 'gray'; // Color por defecto
+        var color = 'black'; // Color por defecto
         if (feature.getProperty('riesgo') === 'alto') {
           color = 'red';
         } else if (feature.getProperty('riesgo') === 'medio') {
