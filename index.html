@@ -45,17 +45,32 @@
 
     #map {
       width: 100%;
-      height: calc(100vh - 140px);
+      height: calc(100vh - 190px);
+    }
+
+    #info-panel {
+      margin: 0 10px 10px 10px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    #info-panel ul {
+      margin: 4px 0 0 16px;
+      padding: 0;
     }
   </style>
 
   <!-- Google Maps JS API (poné tu API key) -->
-  <script src="https://maps.googleapis.com/maps/api/AIzaSyDxaqdAkj5OZSbiim2oxydQAXsxfDOvl7k"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxaqdAkj5OZSbiim2oxydQAXsxfDOvl7k"></script>
+
+  <!-- Turf.js para intersecciones y áreas -->
+  <script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
 
   <script>
     let map;
     let catastroLayer; // capa para las parcelas
-    // Zonificación + Canales van en map.data
 
     function initMap() {
       map = new google.maps.Map(document.getElementById("map"), {
@@ -112,8 +127,6 @@
 
       // =======================
       // 4) Estilo ZONAS + CANALES
-      //   AMENAZA: SEVERA / ALTA / MODERADA / LEVE
-      //   Canales: propiedad Id (si existe, lo pinto como canal)
       // =======================
       map.data.setStyle(function (feature) {
         const amenaza = feature.getProperty("AMENAZA");
@@ -124,7 +137,7 @@
         let strokeWeight = 1;
         let fillOpacity = 0.0;
 
-        // Si tiene AMENAZA, es una zona de riesgo
+        // Zonas de riesgo (AMENAZA)
         if (amenaza) {
           if (amenaza === "SEVERA") {
             fillColor = "red";
@@ -140,11 +153,11 @@
           fillOpacity = fillColor === "transparent" ? 0.0 : 0.4;
         }
 
-        // Si tiene Id (y es la capa de canales), lo pinto como línea roja gruesa
+        // Canales (líneas rojas gruesas)
         if (canalId !== null && canalId !== undefined) {
           strokeColor = "red";
           strokeWeight = 3;
-          fillOpacity = 0.0; // canales son líneas
+          fillOpacity = 0.0;
         }
 
         return {
@@ -186,6 +199,7 @@
     function buscarParcela(filtro) {
       let bounds = new google.maps.LatLngBounds();
       let hayMatch = false;
+      let seleccionadas = [];
 
       catastroLayer.setStyle(function (feature) {
         // Leo los atributos del feature
@@ -207,6 +221,7 @@
 
         if (coincide) {
           hayMatch = true;
+          seleccionadas.push(feature);
 
           // Extiendo bounds con la geometría del feature
           const geom = feature.getGeometry();
@@ -231,7 +246,11 @@
 
       if (hayMatch) {
         map.fitBounds(bounds);
+        // calcular porcentajes de riesgo dentro de las parcelas seleccionadas
+        calcularPorcentajeRiesgo(seleccionadas);
       } else {
+        document.getElementById("info-panel").innerHTML =
+          "<strong>No se encontró ninguna parcela con esos datos.</strong>";
         alert("No se encontró ninguna parcela con esos datos.");
       }
     }
@@ -263,6 +282,126 @@
         });
       }
     }
+
+    // =======================
+    // Calcular porcentaje de riesgo dentro de la(s) parcela(s) seleccionada(s)
+    // usando Turf.js para intersecciones y áreas
+    // =======================
+    function calcularPorcentajeRiesgo(featuresParcela) {
+      if (!featuresParcela.length) return;
+
+      // 1) Convertir las parcelas seleccionadas a GeoJSON
+      const parcelasGeoJSON = {
+        type: "FeatureCollection",
+        features: [],
+      };
+
+      let pendientesParc = featuresParcela.length;
+
+      featuresParcela.forEach((f) => {
+        f.toGeoJson(function (gj) {
+          parcelasGeoJSON.features.push(gj);
+          pendientesParc--;
+          if (pendientesParc === 0) {
+            // Cuando tengo todas las parcelas como GeoJSON, paso a las zonas
+            obtenerZonasYCalcular(parcelasGeoJSON);
+          }
+        });
+      });
+    }
+
+    function obtenerZonasYCalcular(parcelasGeoJSON) {
+      // 2) Obtener todas las features de map.data (zonificación + canales) como GeoJSON
+      map.data.toGeoJson(function (coleccion) {
+        // Filtrar solo las que tienen AMENAZA
+        const zonas = coleccion.features.filter(
+          (f) => f.properties && f.properties.AMENAZA
+        );
+
+        // 3) Calcular intersecciones y áreas
+        const resultado = calcularAreasRiesgo(parcelasGeoJSON, zonas);
+
+        // 4) Mostrar en el panel
+        const props = parcelasGeoJSON.features[0].properties || {};
+        actualizarPanelInfo(resultado, props);
+      });
+    }
+
+    function calcularAreasRiesgo(parcelas, zonas) {
+      let totalAreaParcelas = 0;
+      const areaPorRiesgo = { SEVERA: 0, ALTA: 0, MODERADA: 0, LEVE: 0 };
+
+      // Área total de las parcelas (suma)
+      parcelas.features.forEach((p) => {
+        const areaParc = turf.area(p);
+        totalAreaParcelas += areaParc;
+
+        // Para cada zona, intersectar con la parcela
+        zonas.forEach((z) => {
+          const inter = turf.intersect(p, z);
+          if (inter) {
+            const aInt = turf.area(inter);
+            const riesgo = z.properties.AMENAZA;
+            if (areaPorRiesgo[riesgo] !== undefined) {
+              areaPorRiesgo[riesgo] += aInt;
+            }
+          }
+        });
+      });
+
+      // Evitar división por cero
+      if (totalAreaParcelas === 0) {
+        return {
+          totalArea: 0,
+          porcentajes: { SEVERA: 0, ALTA: 0, MODERADA: 0, LEVE: 0 },
+        };
+      }
+
+      const porcentajes = {};
+      Object.keys(areaPorRiesgo).forEach((k) => {
+        porcentajes[k] = (areaPorRiesgo[k] / totalAreaParcelas) * 100;
+      });
+
+      return {
+        totalArea: totalAreaParcelas,
+        areaPorRiesgo: areaPorRiesgo,
+        porcentajes: porcentajes,
+      };
+    }
+
+    function actualizarPanelInfo(resultado, props) {
+      const nombreParcela =
+        `Chacra ${props.Chacra || "-"}, ` +
+        `Frac. ${props.frac || "-"}, ` +
+        `Sub_Ch ${props.Sub_Ch || "-"}, ` +
+        `Mza ${props.Mza || "-"}, ` +
+        `Parcela ${props.Parce || "-"}, ` +
+        `Quinta ${props.Quinta || "-"}`;
+
+      const p = resultado.porcentajes;
+
+      const html = `
+        <details open>
+          <summary><strong>Parcela seleccionada</strong></summary>
+          <div style="margin-top:4px;">
+            <div><strong>Identificación:</strong> ${nombreParcela}</div>
+            <div style="margin-top:6px;"><strong>Porcentaje de riesgo dentro de la parcela:</strong></div>
+            ${
+              resultado.totalArea === 0
+                ? "<div>No se pudo calcular el área (revisar geometrías).</div>"
+                : `<ul>
+                    <li>Severa: ${p.SEVERA.toFixed(1)}%</li>
+                    <li>Alta: ${p.ALTA.toFixed(1)}%</li>
+                    <li>Moderada: ${p.MODERADA.toFixed(1)}%</li>
+                    <li>Leve: ${p.LEVE.toFixed(1)}%</li>
+                  </ul>`
+            }
+          </div>
+        </details>
+      `;
+
+      document.getElementById("info-panel").innerHTML = html;
+    }
   </script>
 </head>
 <body onload="initMap()">
@@ -290,6 +429,10 @@
 
       <button type="submit">Buscar</button>
     </form>
+  </div>
+
+  <div id="info-panel">
+    <!-- Acá se muestra el “desplegable” con nombre de parcela y porcentajes -->
   </div>
 
   <div id="map"></div>
