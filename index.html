@@ -1,147 +1,297 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mapa de Riesgo Hídrico</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mapa de Riesgo Hídrico - Villa Ángela</title>
   <style>
-    #map {
-      height: 600px;
-      width: 100%;
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
     }
-    #search-form {
+
+    h1 {
       margin: 10px;
+      font-size: 20px;
     }
-    #search-form input {
-      margin-right: 5px;
+
+    #panel {
+      margin: 0 10px 10px 10px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 4px;
+    }
+
+    #panel label {
+      font-size: 12px;
+      margin-right: 4px;
+    }
+
+    #panel input {
+      width: 70px;
+      padding: 2px 4px;
+      margin-right: 6px;
+      margin-bottom: 4px;
+      font-size: 12px;
+    }
+
+    #panel button {
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    #map {
+      width: 100%;
+      height: calc(100vh - 140px);
     }
   </style>
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxaqdAkj5OZSbiim2oxydQAXsxfDOvl7k"></script>
+
+  <!-- Google Maps JS API (poné tu API key) -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+
   <script>
     let map;
-    let catastroLayer;
+    let catastroLayer; // capa para las parcelas
+    // Zonificación + Canales van en map.data
 
     function initMap() {
-      map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 10,
-        center: {lat: -27.569591091468123, lng: -60.709673623075524},
-        mapTypeId: 'satellite'
+      map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 12,
+        center: { lat: -27.569591091468123, lng: -60.709673623075524 },
+        mapTypeId: "satellite",
       });
 
+      // =======================
+      // 1) Cargar CATASTRO
+      // =======================
       catastroLayer = new google.maps.Data();
-      catastroLayer.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json');
-      catastroLayer.setStyle(function(feature) {
+      catastroLayer.loadGeoJson(
+        "https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json",
+        null,
+        function () {
+          console.log("Catastro cargado");
+        }
+      );
+
+      // Estilo base del catastro (contorno claro, sin relleno)
+      catastroLayer.setStyle(function (feature) {
         return {
-          fillColor: 'transparent',
-          strokeColor: 'black',
-          strokeWeight: 1
+          fillColor: "transparent",
+          fillOpacity: 0,
+          strokeColor: "#ffffff",
+          strokeWeight: 1,
         };
       });
+
       catastroLayer.setMap(map);
 
-      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json');
-      map.data.loadGeoJson('https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.json');
+      // =======================
+      // 2) Cargar ZONIFICACIÓN
+      // =======================
+      map.data.loadGeoJson(
+        "https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json",
+        null,
+        function () {
+          console.log("Zonificación cargada");
+        }
+      );
 
-      map.data.setStyle(function(feature) {
-        var color = 'transparent';
-        var riesgo = feature.getProperty('AMENAZA');
-        var canales = feature.getProperty('Id');
+      // =======================
+      // 3) Cargar CANALES
+      // =======================
+      map.data.loadGeoJson(
+        "https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.json",
+        null,
+        function () {
+          console.log("Canales cargados");
+        }
+      );
 
-        if (riesgo === 'SEVERA') {
-          color = 'red';
-        } else if (riesgo === 'ALTA') {
-          color = 'yellow';
-        } else if (riesgo === 'MODERADA') {
-          color = 'green';
+      // =======================
+      // 4) Estilo ZONAS + CANALES
+      //   AMENAZA: SEVERA / ALTA / MODERADA / LEVE
+      //   Canales: propiedad Id (si existe, lo pinto como canal)
+      // =======================
+      map.data.setStyle(function (feature) {
+        const amenaza = feature.getProperty("AMENAZA");
+        const canalId = feature.getProperty("Id");
+
+        let fillColor = "transparent";
+        let strokeColor = "transparent";
+        let strokeWeight = 1;
+        let fillOpacity = 0.0;
+
+        // Si tiene AMENAZA, es una zona de riesgo
+        if (amenaza) {
+          if (amenaza === "SEVERA") {
+            fillColor = "red";
+          } else if (amenaza === "ALTA") {
+            fillColor = "yellow";
+          } else if (amenaza === "MODERADA") {
+            fillColor = "green";
+          } else if (amenaza === "LEVE") {
+            fillColor = "transparent";
+          }
+          strokeColor = fillColor === "transparent" ? "#aaaaaa" : fillColor;
+          strokeWeight = 1;
+          fillOpacity = fillColor === "transparent" ? 0.0 : 0.4;
         }
 
-        if (canales === 0) {
-          color = 'red';
+        // Si tiene Id (y es la capa de canales), lo pinto como línea roja gruesa
+        if (canalId !== null && canalId !== undefined) {
+          strokeColor = "red";
+          strokeWeight = 3;
+          fillOpacity = 0.0; // canales son líneas
         }
 
         return {
-          fillColor: color,
-          fillOpacity: 0.6,
-          strokeColor: color,
-          strokeWeight: 1
+          fillColor: fillColor,
+          fillOpacity: fillOpacity,
+          strokeColor: strokeColor,
+          strokeWeight: strokeWeight,
         };
       });
 
-      // Evento para buscar y resaltar una parcela
-      document.getElementById('search-form').addEventListener('submit', function(event) {
-        event.preventDefault();
-        const chacra = document.getElementById('chacra').value;
-        const fraccion = document.getElementById('fraccion').value;
-        const subCh = document.getElementById('sub-ch').value;
-        const manzana = document.getElementById('manzana').value;
-        const parcela = document.getElementById('parcela').value;
-        const quinta = document.getElementById('quinta').value;
-        highlightParcel(chacra, fraccion, subCh, manzana, parcela, quinta);
-      });
+      // =======================
+      // 5) Manejar el formulario de búsqueda catastral
+      // =======================
+      document
+        .getElementById("search-form")
+        .addEventListener("submit", function (e) {
+          e.preventDefault();
+          const chacra = document.getElementById("chacra").value.trim();
+          const fraccion = document.getElementById("fraccion").value.trim();
+          const subCh = document.getElementById("sub-ch").value.trim();
+          const manzana = document.getElementById("manzana").value.trim();
+          const parcela = document.getElementById("parcela").value.trim();
+          const quinta = document.getElementById("quinta").value.trim();
+
+          buscarParcela({
+            Chacra: chacra,
+            frac: fraccion,
+            Sub_Ch: subCh,
+            Mza: manzana,
+            Parce: parcela,
+            Quinta: quinta,
+          });
+        });
     }
 
-    function highlightParcel(chacra, fraccion, subCh, manzana, parcela, quinta) {
-      catastroLayer.setStyle(function(feature) {
-        const isMatch = (feature.getProperty('Chacra') === chacra &&
-                         feature.getProperty('frac') === fraccion &&
-                         feature.getProperty('Sub_Ch') === subCh &&
-                         feature.getProperty('Mza') === manzana &&
-                         feature.getProperty('Parce') === parcela &&
-                         feature.getProperty('Quinta') === quinta);
-        
-        const color = isMatch ? 'blue' : 'transparent';
-        
-        return {
-          fillColor: color,
-          fillOpacity: 0.6,
-          strokeColor: color,
-          strokeWeight: 3
-        };
-      });
+    // =======================
+    // Buscar y resaltar parcela
+    // =======================
+    function buscarParcela(filtro) {
+      let bounds = new google.maps.LatLngBounds();
+      let hayMatch = false;
 
-      // Obtener y mostrar el porcentaje de riesgo dentro de la parcela
-      calculateRiskPercentages(chacra, fraccion, subCh, manzana, parcela, quinta);
-    }
+      catastroLayer.setStyle(function (feature) {
+        // Leo los atributos del feature
+        const fChacra = (feature.getProperty("Chacra") || "").toString().trim();
+        const fFrac = (feature.getProperty("frac") || "").toString().trim();
+        const fSubCh = (feature.getProperty("Sub_Ch") || "").toString().trim();
+        const fMza = (feature.getProperty("Mza") || "").toString().trim();
+        const fParce = (feature.getProperty("Parce") || "").toString().trim();
+        const fQuinta = (feature.getProperty("Quinta") || "").toString().trim();
 
-    function calculateRiskPercentages(chacra, fraccion, subCh, manzana, parcela, quinta) {
-      let totalArea = 0;
-      let riskArea = { SEVERA: 0, ALTA: 0, MODERADA: 0, LEVE: 0 };
+        // Coincidencia EXACTA en todos los campos no vacíos
+        const coincide =
+          (filtro.Chacra === "" || filtro.Chacra === fChacra) &&
+          (filtro.frac === "" || filtro.frac === fFrac) &&
+          (filtro.Sub_Ch === "" || filtro.Sub_Ch === fSubCh) &&
+          (filtro.Mza === "" || filtro.Mza === fMza) &&
+          (filtro.Parce === "" || filtro.Parce === fParce) &&
+          (filtro.Quinta === "" || filtro.Quinta === fQuinta);
 
-      map.data.forEach(function(feature) {
-        if (feature.getProperty('AMENAZA')) {
-          const riesgo = feature.getProperty('AMENAZA');
-          const area = google.maps.geometry.spherical.computeArea(feature.getGeometry().getCoordinates());
-          totalArea += area;
-          riskArea[riesgo] += area;
+        if (coincide) {
+          hayMatch = true;
+
+          // Extiendo bounds con la geometría del feature
+          const geom = feature.getGeometry();
+          expandBoundsFromGeometry(geom, bounds);
+
+          return {
+            fillColor: "#00ffff",
+            fillOpacity: 0.4,
+            strokeColor: "#00ffff",
+            strokeWeight: 3,
+          };
+        } else {
+          // estilo base para el resto
+          return {
+            fillColor: "transparent",
+            fillOpacity: 0,
+            strokeColor: "#ffffff",
+            strokeWeight: 1,
+          };
         }
       });
 
-      const percentages = {
-        SEVERA: (riskArea['SEVERA'] / totalArea) * 100,
-        ALTA: (riskArea['ALTA'] / totalArea) * 100,
-        MODERADA: (riskArea['MODERADA'] / totalArea) * 100,
-        LEVE: (riskArea['LEVE'] / totalArea) * 100
-      };
+      if (hayMatch) {
+        map.fitBounds(bounds);
+      } else {
+        alert("No se encontró ninguna parcela con esos datos.");
+      }
+    }
 
-      alert(`Porcentaje de riesgo en la parcela:\n
-      SEVERA: ${percentages.SEVERA.toFixed(2)}%\n
-      ALTA: ${percentages.ALTA.toFixed(2)}%\n
-      MODERADA: ${percentages.MODERADA.toFixed(2)}%\n
-      LEVE: ${percentages.LEVE.toFixed(2)}%`);
+    // Recorre cualquier tipo de geometría y extiende los bounds
+    function expandBoundsFromGeometry(geometry, bounds) {
+      const type = geometry.getType();
+      if (type === "Point") {
+        bounds.extend(geometry.get());
+      } else if (
+        type === "MultiPoint" ||
+        type === "LineString" ||
+        type === "LinearRing"
+      ) {
+        geometry.getArray().forEach(function (latLng) {
+          bounds.extend(latLng);
+        });
+      } else if (
+        type === "MultiLineString" ||
+        type === "Polygon" ||
+        type === "MultiPolygon"
+      ) {
+        geometry.getArray().forEach(function (g) {
+          expandBoundsFromGeometry(g, bounds);
+        });
+      } else if (type === "GeometryCollection") {
+        geometry.getArray().forEach(function (g) {
+          expandBoundsFromGeometry(g, bounds);
+        });
+      }
     }
   </script>
 </head>
 <body onload="initMap()">
-  <h1>Mapa de Riesgo Hídrico</h1>
-  <form id="search-form">
-    <input type="text" id="chacra" placeholder="Chacra" maxlength="3">
-    <input type="text" id="fraccion" placeholder="Fracción" maxlength="1">
-    <input type="text" id="sub-ch" placeholder="Sub chacra" maxlength="3">
-    <input type="text" id="manzana" placeholder="Manzana" maxlength="3">
-    <input type="text" id="parcela" placeholder="Parcela" maxlength="6">
-    <input type="text" id="quinta" placeholder="Quinta" maxlength="2">
-    <button type="submit">Buscar Parcela</button>
-  </form>
+  <h1>Mapa de Riesgo Hídrico - Villa Ángela</h1>
+
+  <div id="panel">
+    <form id="search-form">
+      <label>Chacra</label>
+      <input type="text" id="chacra" maxlength="3" />
+
+      <label>Frac.</label>
+      <input type="text" id="fraccion" maxlength="1" />
+
+      <label>Sub Ch.</label>
+      <input type="text" id="sub-ch" maxlength="3" />
+
+      <label>Mza</label>
+      <input type="text" id="manzana" maxlength="3" />
+
+      <label>Parcela</label>
+      <input type="text" id="parcela" maxlength="6" />
+
+      <label>Quinta</label>
+      <input type="text" id="quinta" maxlength="2" />
+
+      <button type="submit">Buscar</button>
+    </form>
+  </div>
+
   <div id="map"></div>
 </body>
 </html>
