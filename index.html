@@ -29,8 +29,7 @@
       margin-right: 4px;
     }
 
-    #panel input {
-      width: 70px;
+    #panel select {
       padding: 2px 4px;
       margin-right: 6px;
       margin-bottom: 4px;
@@ -45,7 +44,7 @@
 
     #map {
       width: 100%;
-      height: calc(100vh - 190px);
+      height: calc(100vh - 210px);
     }
 
     #info-panel {
@@ -60,9 +59,14 @@
       margin: 4px 0 0 16px;
       padding: 0;
     }
+
+    #direccion {
+      padding: 2px 4px;
+      font-size: 12px;
+    }
   </style>
 
-  <!-- Google Maps JS API (poné tu API key) -->
+  <!-- Google Maps JS API (reemplazar YOUR_API_KEY) + Places -->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDxaqdAkj5OZSbiim2oxydQAXsxfDOvl7k&libraries=places"></script>
 
   <!-- Turf.js para intersecciones y áreas -->
@@ -70,9 +74,10 @@
 
   <script>
     let map;
-    let catastroLayer; // capa para las parcelas
+    let catastroLayer;
 
     function initMap() {
+      // Crear mapa
       map = new google.maps.Map(document.getElementById("map"), {
         zoom: 12,
         center: { lat: -27.569591091468123, lng: -60.709673623075524 },
@@ -88,11 +93,11 @@
         null,
         function () {
           console.log("Catastro cargado");
+          poblarDesplegablesDesdeCatastro();
         }
       );
 
-      // Estilo base del catastro (contorno claro, sin relleno)
-      catastroLayer.setStyle(function (feature) {
+      catastroLayer.setStyle(function () {
         return {
           fillColor: "transparent",
           fillOpacity: 0,
@@ -137,23 +142,19 @@
         let strokeWeight = 1;
         let fillOpacity = 0.0;
 
-        // Zonas de riesgo (AMENAZA)
+        // Zonas de riesgo
         if (amenaza) {
-          if (amenaza === "SEVERA") {
-            fillColor = "red";
-          } else if (amenaza === "ALTA") {
-            fillColor = "yellow";
-          } else if (amenaza === "MODERADA") {
-            fillColor = "green";
-          } else if (amenaza === "LEVE") {
-            fillColor = "transparent";
-          }
+          if (amenaza === "SEVERA") fillColor = "red";
+          else if (amenaza === "ALTA") fillColor = "yellow";
+          else if (amenaza === "MODERADA") fillColor = "green";
+          else if (amenaza === "LEVE") fillColor = "transparent";
+
           strokeColor = fillColor === "transparent" ? "#aaaaaa" : fillColor;
           strokeWeight = 1;
           fillOpacity = fillColor === "transparent" ? 0.0 : 0.4;
         }
 
-        // Canales (líneas rojas gruesas)
+        // Canales: línea roja gruesa
         if (canalId !== null && canalId !== undefined) {
           strokeColor = "red";
           strokeWeight = 3;
@@ -161,35 +162,98 @@
         }
 
         return {
-          fillColor: fillColor,
-          fillOpacity: fillOpacity,
-          strokeColor: strokeColor,
-          strokeWeight: strokeWeight,
+          fillColor,
+          fillOpacity,
+          strokeColor,
+          strokeWeight,
         };
       });
 
       // =======================
-      // 5) Manejar el formulario de búsqueda catastral
+      // 5) Formulario de búsqueda CATASTRAL (desplegables)
       // =======================
       document
         .getElementById("search-form")
         .addEventListener("submit", function (e) {
           e.preventDefault();
-          const chacra = document.getElementById("chacra").value.trim();
-          const fraccion = document.getElementById("fraccion").value.trim();
-          const subCh = document.getElementById("sub-ch").value.trim();
-          const manzana = document.getElementById("manzana").value.trim();
-          const parcela = document.getElementById("parcela").value.trim();
-          const quinta = document.getElementById("quinta").value.trim();
 
-          buscarParcela({
-            Chacra: chacra,
-            frac: fraccion,
-            Sub_Ch: subCh,
-            Mza: manzana,
-            Parce: parcela,
-            Quinta: quinta,
-          });
+          const filtro = {
+            Chacra: document.getElementById("chacraSelect").value,
+            frac: document.getElementById("fraccionSelect").value,
+            Sub_Ch: document.getElementById("subChSelect").value,
+            Mza: document.getElementById("manzanaSelect").value,
+            Parce: document.getElementById("parcelaSelect").value,
+            Quinta: document.getElementById("quintaSelect").value,
+          };
+
+          buscarParcela(filtro);
+        });
+
+      // =======================
+      // 6) Buscador por dirección (Places Autocomplete)
+      // =======================
+      const inputDir = document.getElementById("direccion");
+      const autocomplete = new google.maps.places.Autocomplete(inputDir, {
+        componentRestrictions: { country: "ar" }, // opcional: limitar a Argentina
+      });
+      autocomplete.bindTo("bounds", map);
+
+      autocomplete.addListener("place_changed", function () {
+        const place = autocomplete.getPlace();
+        if (!place.geometry) {
+          alert("No se encontró la dirección.");
+          return;
+        }
+
+        if (place.geometry.viewport) {
+          map.fitBounds(place.geometry.viewport);
+        } else {
+          map.setCenter(place.geometry.location);
+          map.setZoom(18);
+        }
+      });
+    }
+
+    // =======================
+    // Poblar desplegables desde el CATASTRO
+    // =======================
+    function poblarDesplegablesDesdeCatastro() {
+      const sets = {
+        Chacra: new Set(),
+        frac: new Set(),
+        Sub_Ch: new Set(),
+        Mza: new Set(),
+        Parce: new Set(),
+        Quinta: new Set(),
+      };
+
+      catastroLayer.forEach(function (feature) {
+        Object.keys(sets).forEach(function (key) {
+          const val = feature.getProperty(key);
+          if (val !== null && val !== undefined && val !== "") {
+            sets[key].add(val.toString());
+          }
+        });
+      });
+
+      llenarSelect("chacraSelect", sets.Chacra);
+      llenarSelect("fraccionSelect", sets.frac);
+      llenarSelect("subChSelect", sets.Sub_Ch);
+      llenarSelect("manzanaSelect", sets.Mza);
+      llenarSelect("parcelaSelect", sets.Parce);
+      llenarSelect("quintaSelect", sets.Quinta);
+    }
+
+    function llenarSelect(selectId, valueSet) {
+      const sel = document.getElementById(selectId);
+      sel.innerHTML = '<option value="">Todas</option>';
+      Array.from(valueSet)
+        .sort()
+        .forEach(function (val) {
+          const opt = document.createElement("option");
+          opt.value = val;
+          opt.textContent = val;
+          sel.appendChild(opt);
         });
     }
 
@@ -202,7 +266,6 @@
       let seleccionadas = [];
 
       catastroLayer.setStyle(function (feature) {
-        // Leo los atributos del feature
         const fChacra = (feature.getProperty("Chacra") || "").toString().trim();
         const fFrac = (feature.getProperty("frac") || "").toString().trim();
         const fSubCh = (feature.getProperty("Sub_Ch") || "").toString().trim();
@@ -210,7 +273,6 @@
         const fParce = (feature.getProperty("Parce") || "").toString().trim();
         const fQuinta = (feature.getProperty("Quinta") || "").toString().trim();
 
-        // Coincidencia EXACTA en todos los campos no vacíos
         const coincide =
           (filtro.Chacra === "" || filtro.Chacra === fChacra) &&
           (filtro.frac === "" || filtro.frac === fFrac) &&
@@ -222,11 +284,8 @@
         if (coincide) {
           hayMatch = true;
           seleccionadas.push(feature);
-
-          // Extiendo bounds con la geometría del feature
           const geom = feature.getGeometry();
           expandBoundsFromGeometry(geom, bounds);
-
           return {
             fillColor: "#00ffff",
             fillOpacity: 0.4,
@@ -234,7 +293,6 @@
             strokeWeight: 3,
           };
         } else {
-          // estilo base para el resto
           return {
             fillColor: "transparent",
             fillOpacity: 0,
@@ -246,7 +304,23 @@
 
       if (hayMatch) {
         map.fitBounds(bounds);
-        // calcular porcentajes de riesgo dentro de las parcelas seleccionadas
+
+        // mostrar algo básico de la primera parcela mientras se calculan porcentajes
+        const propsFirst = seleccionadas[0]
+          ? {
+              Chacra: seleccionadas[0].getProperty("Chacra"),
+              frac: seleccionadas[0].getProperty("frac"),
+              Sub_Ch: seleccionadas[0].getProperty("Sub_Ch"),
+              Mza: seleccionadas[0].getProperty("Mza"),
+              Parce: seleccionadas[0].getProperty("Parce"),
+              Quinta: seleccionadas[0].getProperty("Quinta"),
+            }
+          : {};
+        actualizarPanelInfo(
+          { totalArea: 0, porcentajes: { SEVERA: 0, ALTA: 0, MODERADA: 0, LEVE: 0 } },
+          propsFirst
+        );
+
         calcularPorcentajeRiesgo(seleccionadas);
       } else {
         document.getElementById("info-panel").innerHTML =
@@ -255,7 +329,6 @@
       }
     }
 
-    // Recorre cualquier tipo de geometría y extiende los bounds
     function expandBoundsFromGeometry(geometry, bounds) {
       const type = geometry.getType();
       if (type === "Point") {
@@ -265,37 +338,28 @@
         type === "LineString" ||
         type === "LinearRing"
       ) {
-        geometry.getArray().forEach(function (latLng) {
-          bounds.extend(latLng);
-        });
+        geometry.getArray().forEach((latLng) => bounds.extend(latLng));
       } else if (
         type === "MultiLineString" ||
         type === "Polygon" ||
         type === "MultiPolygon"
       ) {
-        geometry.getArray().forEach(function (g) {
-          expandBoundsFromGeometry(g, bounds);
-        });
+        geometry.getArray().forEach((g) => expandBoundsFromGeometry(g, bounds));
       } else if (type === "GeometryCollection") {
-        geometry.getArray().forEach(function (g) {
-          expandBoundsFromGeometry(g, bounds);
-        });
+        geometry.getArray().forEach((g) => expandBoundsFromGeometry(g, bounds));
       }
     }
 
     // =======================
-    // Calcular porcentaje de riesgo dentro de la(s) parcela(s) seleccionada(s)
-    // usando Turf.js para intersecciones y áreas
+    // Cálculo de riesgo con Turf
     // =======================
     function calcularPorcentajeRiesgo(featuresParcela) {
-      if (!featuresParcela.length) return;
+      if (!featuresParcela.length || typeof turf === "undefined") {
+        console.warn("No hay parcelas o Turf no está disponible.");
+        return;
+      }
 
-      // 1) Convertir las parcelas seleccionadas a GeoJSON
-      const parcelasGeoJSON = {
-        type: "FeatureCollection",
-        features: [],
-      };
-
+      const parcelasGeoJSON = { type: "FeatureCollection", features: [] };
       let pendientesParc = featuresParcela.length;
 
       featuresParcela.forEach((f) => {
@@ -303,27 +367,16 @@
           parcelasGeoJSON.features.push(gj);
           pendientesParc--;
           if (pendientesParc === 0) {
-            // Cuando tengo todas las parcelas como GeoJSON, paso a las zonas
-            obtenerZonasYCalcular(parcelasGeoJSON);
+            map.data.toGeoJson(function (coleccion) {
+              const zonas = coleccion.features.filter(
+                (z) => z.properties && z.properties.AMENAZA
+              );
+              const resultado = calcularAreasRiesgo(parcelasGeoJSON, zonas);
+              const props = parcelasGeoJSON.features[0].properties || {};
+              actualizarPanelInfo(resultado, props);
+            });
           }
         });
-      });
-    }
-
-    function obtenerZonasYCalcular(parcelasGeoJSON) {
-      // 2) Obtener todas las features de map.data (zonificación + canales) como GeoJSON
-      map.data.toGeoJson(function (coleccion) {
-        // Filtrar solo las que tienen AMENAZA
-        const zonas = coleccion.features.filter(
-          (f) => f.properties && f.properties.AMENAZA
-        );
-
-        // 3) Calcular intersecciones y áreas
-        const resultado = calcularAreasRiesgo(parcelasGeoJSON, zonas);
-
-        // 4) Mostrar en el panel
-        const props = parcelasGeoJSON.features[0].properties || {};
-        actualizarPanelInfo(resultado, props);
       });
     }
 
@@ -331,12 +384,10 @@
       let totalAreaParcelas = 0;
       const areaPorRiesgo = { SEVERA: 0, ALTA: 0, MODERADA: 0, LEVE: 0 };
 
-      // Área total de las parcelas (suma)
       parcelas.features.forEach((p) => {
         const areaParc = turf.area(p);
         totalAreaParcelas += areaParc;
 
-        // Para cada zona, intersectar con la parcela
         zonas.forEach((z) => {
           const inter = turf.intersect(p, z);
           if (inter) {
@@ -349,7 +400,6 @@
         });
       });
 
-      // Evitar división por cero
       if (totalAreaParcelas === 0) {
         return {
           totalArea: 0,
@@ -364,8 +414,8 @@
 
       return {
         totalArea: totalAreaParcelas,
-        areaPorRiesgo: areaPorRiesgo,
-        porcentajes: porcentajes,
+        areaPorRiesgo,
+        porcentajes,
       };
     }
 
@@ -378,7 +428,13 @@
         `Parcela ${props.Parce || "-"}, ` +
         `Quinta ${props.Quinta || "-"}`;
 
-      const p = resultado.porcentajes;
+      const p =
+        resultado.porcentajes || {
+          SEVERA: 0,
+          ALTA: 0,
+          MODERADA: 0,
+          LEVE: 0,
+        };
 
       const html = `
         <details open>
@@ -387,8 +443,8 @@
             <div><strong>Identificación:</strong> ${nombreParcela}</div>
             <div style="margin-top:6px;"><strong>Porcentaje de riesgo dentro de la parcela:</strong></div>
             ${
-              resultado.totalArea === 0
-                ? "<div>No se pudo calcular el área (revisar geometrías).</div>"
+              !resultado.totalArea
+                ? "<div>(Aún sin cálculo o geometría no válida)</div>"
                 : `<ul>
                     <li>Severa: ${p.SEVERA.toFixed(1)}%</li>
                     <li>Alta: ${p.ALTA.toFixed(1)}%</li>
@@ -399,7 +455,6 @@
           </div>
         </details>
       `;
-
       document.getElementById("info-panel").innerHTML = html;
     }
   </script>
@@ -410,29 +465,46 @@
   <div id="panel">
     <form id="search-form">
       <label>Chacra</label>
-      <input type="text" id="chacra" maxlength="3" />
+      <select id="chacraSelect">
+        <option value="">Todas</option>
+      </select>
 
       <label>Frac.</label>
-      <input type="text" id="fraccion" maxlength="1" />
+      <select id="fraccionSelect">
+        <option value="">Todas</option>
+      </select>
 
       <label>Sub Ch.</label>
-      <input type="text" id="sub-ch" maxlength="3" />
+      <select id="subChSelect">
+        <option value="">Todas</option>
+      </select>
 
       <label>Mza</label>
-      <input type="text" id="manzana" maxlength="3" />
+      <select id="manzanaSelect">
+        <option value="">Todas</option>
+      </select>
 
       <label>Parcela</label>
-      <input type="text" id="parcela" maxlength="6" />
+      <select id="parcelaSelect">
+        <option value="">Todas</option>
+      </select>
 
       <label>Quinta</label>
-      <input type="text" id="quinta" maxlength="2" />
+      <select id="quintaSelect">
+        <option value="">Todas</option>
+      </select>
 
-      <button type="submit">Buscar</button>
+      <button type="submit">Buscar parcela</button>
     </form>
+
+    <div style="margin-top:8px;">
+      <label>Buscar por dirección:</label>
+      <input type="text" id="direccion" placeholder="Ej: San Martín 100, Villa Ángela" />
+    </div>
   </div>
 
   <div id="info-panel">
-    <!-- Acá se muestra el “desplegable” con nombre de parcela y porcentajes -->
+    <!-- Aquí se mostrará el desplegable con la parcela y porcentajes -->
   </div>
 
   <div id="map"></div>
