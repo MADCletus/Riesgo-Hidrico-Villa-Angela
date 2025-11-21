@@ -20,7 +20,7 @@
     #panel {
       margin: 0 10px 10px 10px;
       padding: 10px;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.9);
       border-radius: 4px;
     }
 
@@ -34,12 +34,25 @@
       margin-right: 6px;
       margin-bottom: 4px;
       font-size: 12px;
+      background: #ffffff;
+      color: #000000;   /* <-- acá estaba el problema */
+      border-radius: 2px;
     }
 
     #panel button {
       padding: 4px 10px;
       font-size: 12px;
       cursor: pointer;
+    }
+
+    #direccion {
+      padding: 2px 4px;
+      font-size: 12px;
+      width: 280px;
+      background: #ffffff;
+      color: #000000;
+      border-radius: 2px;
+      margin-left: 4px;
     }
 
     #map {
@@ -50,19 +63,15 @@
     #info-panel {
       margin: 0 10px 10px 10px;
       padding: 10px;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.9);
       border-radius: 4px;
       font-size: 13px;
+      min-height: 40px;
     }
 
     #info-panel ul {
       margin: 4px 0 0 16px;
       padding: 0;
-    }
-
-    #direccion {
-      padding: 2px 4px;
-      font-size: 12px;
     }
   </style>
 
@@ -77,16 +86,13 @@
     let catastroLayer;
 
     function initMap() {
-      // Crear mapa
       map = new google.maps.Map(document.getElementById("map"), {
         zoom: 12,
         center: { lat: -27.569591091468123, lng: -60.709673623075524 },
         mapTypeId: "satellite",
       });
 
-      // =======================
-      // 1) Cargar CATASTRO
-      // =======================
+      // 1) CATASTRO
       catastroLayer = new google.maps.Data();
       catastroLayer.loadGeoJson(
         "https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Catastro.json",
@@ -105,12 +111,9 @@
           strokeWeight: 1,
         };
       });
-
       catastroLayer.setMap(map);
 
-      // =======================
-      // 2) Cargar ZONIFICACIÓN
-      // =======================
+      // 2) ZONIFICACIÓN
       map.data.loadGeoJson(
         "https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Zonificacion.json",
         null,
@@ -119,9 +122,7 @@
         }
       );
 
-      // =======================
-      // 3) Cargar CANALES
-      // =======================
+      // 3) CANALES
       map.data.loadGeoJson(
         "https://madcletus.github.io/Riesgo-Hidrico-Villa-Angela/Canales.json",
         null,
@@ -130,9 +131,7 @@
         }
       );
 
-      // =======================
-      // 4) Estilo ZONAS + CANALES
-      // =======================
+      // Estilo ZONAS + CANALES
       map.data.setStyle(function (feature) {
         const amenaza = feature.getProperty("AMENAZA");
         const canalId = feature.getProperty("Id");
@@ -142,7 +141,6 @@
         let strokeWeight = 1;
         let fillOpacity = 0.0;
 
-        // Zonas de riesgo
         if (amenaza) {
           if (amenaza === "SEVERA") fillColor = "red";
           else if (amenaza === "ALTA") fillColor = "yellow";
@@ -154,24 +152,16 @@
           fillOpacity = fillColor === "transparent" ? 0.0 : 0.4;
         }
 
-        // Canales: línea roja gruesa
         if (canalId !== null && canalId !== undefined) {
           strokeColor = "red";
           strokeWeight = 3;
           fillOpacity = 0.0;
         }
 
-        return {
-          fillColor,
-          fillOpacity,
-          strokeColor,
-          strokeWeight,
-        };
+        return { fillColor, fillOpacity, strokeColor, strokeWeight };
       });
 
-      // =======================
-      // 5) Formulario de búsqueda CATASTRAL (desplegables)
-      // =======================
+      // Formulario de búsqueda por catastro
       document
         .getElementById("search-form")
         .addEventListener("submit", function (e) {
@@ -189,12 +179,10 @@
           buscarParcela(filtro);
         });
 
-      // =======================
-      // 6) Buscador por dirección (Places Autocomplete)
-      // =======================
+      // Buscador por direcciones
       const inputDir = document.getElementById("direccion");
       const autocomplete = new google.maps.places.Autocomplete(inputDir, {
-        componentRestrictions: { country: "ar" }, // opcional: limitar a Argentina
+        componentRestrictions: { country: "ar" },
       });
       autocomplete.bindTo("bounds", map);
 
@@ -204,7 +192,6 @@
           alert("No se encontró la dirección.");
           return;
         }
-
         if (place.geometry.viewport) {
           map.fitBounds(place.geometry.viewport);
         } else {
@@ -214,9 +201,7 @@
       });
     }
 
-    // =======================
-    // Poblar desplegables desde el CATASTRO
-    // =======================
+    // Poblar combos desde catastro
     function poblarDesplegablesDesdeCatastro() {
       const sets = {
         Chacra: new Set(),
@@ -257,9 +242,7 @@
         });
     }
 
-    // =======================
-    // Buscar y resaltar parcela
-    // =======================
+    // Buscar y resaltar parcelas
     function buscarParcela(filtro) {
       let bounds = new google.maps.LatLngBounds();
       let hayMatch = false;
@@ -284,8 +267,7 @@
         if (coincide) {
           hayMatch = true;
           seleccionadas.push(feature);
-          const geom = feature.getGeometry();
-          expandBoundsFromGeometry(geom, bounds);
+          expandBoundsFromGeometry(feature.getGeometry(), bounds);
           return {
             fillColor: "#00ffff",
             fillOpacity: 0.4,
@@ -305,7 +287,6 @@
       if (hayMatch) {
         map.fitBounds(bounds);
 
-        // mostrar algo básico de la primera parcela mientras se calculan porcentajes
         const propsFirst = seleccionadas[0]
           ? {
               Chacra: seleccionadas[0].getProperty("Chacra"),
@@ -316,6 +297,7 @@
               Quinta: seleccionadas[0].getProperty("Quinta"),
             }
           : {};
+
         actualizarPanelInfo(
           { totalArea: 0, porcentajes: { SEVERA: 0, ALTA: 0, MODERADA: 0, LEVE: 0 } },
           propsFirst
@@ -350,9 +332,7 @@
       }
     }
 
-    // =======================
     // Cálculo de riesgo con Turf
-    // =======================
     function calcularPorcentajeRiesgo(featuresParcela) {
       if (!featuresParcela.length || typeof turf === "undefined") {
         console.warn("No hay parcelas o Turf no está disponible.");
@@ -494,7 +474,7 @@
         <option value="">Todas</option>
       </select>
 
-      <button type="submit">Buscar parcela</button>
+      <button type="submit">Buscar</button>
     </form>
 
     <div style="margin-top:8px;">
@@ -504,7 +484,7 @@
   </div>
 
   <div id="info-panel">
-    <!-- Aquí se mostrará el desplegable con la parcela y porcentajes -->
+    <!-- acá se muestra el desplegable con la info -->
   </div>
 
   <div id="map"></div>
