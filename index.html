@@ -180,26 +180,31 @@
         });
 
       // Buscador por direcciones
-      const inputDir = document.getElementById("direccion");
-      const autocomplete = new google.maps.places.Autocomplete(inputDir, {
-        componentRestrictions: { country: "ar" },
-      });
-      autocomplete.bindTo("bounds", map);
+const inputDir = document.getElementById("direccion");
 
-      autocomplete.addListener("place_changed", function () {
-        const place = autocomplete.getPlace();
-        if (!place.geometry) {
-          alert("No se encontró la dirección.");
-          return;
-        }
-        if (place.geometry.viewport) {
-          map.fitBounds(place.geometry.viewport);
-        } else {
-          map.setCenter(place.geometry.location);
-          map.setZoom(18);
-        }
-      });
-    }
+const autocomplete = new google.maps.places.Autocomplete(inputDir, {
+  componentRestrictions: { country: "ar" },  // limitar a Argentina (opcional)
+  fields: ["geometry", "formatted_address", "name"]  // 👈 PEDIMOS GEOMETRY
+});
+
+autocomplete.bindTo("bounds", map);
+
+autocomplete.addListener("place_changed", function () {
+  const place = autocomplete.getPlace();
+  console.log("Place devuelto por Autocomplete:", place);
+
+  if (!place.geometry || !place.geometry.location) {
+    alert("No se encontró la dirección (el lugar no tiene geometría).");
+    return;
+  }
+
+  if (place.geometry.viewport) {
+    map.fitBounds(place.geometry.viewport);
+  } else {
+    map.setCenter(place.geometry.location);
+    map.setZoom(18);
+  }
+});
 
     // Poblar combos desde catastro
     function poblarDesplegablesDesdeCatastro() {
